@@ -58,4 +58,12 @@ class CounterCollection extends MetricCollection implements MetricTypeCollection
     {
         return Counter::createFromCounterOptions($options);
     }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getType()
+    {
+        return 'counter';
+    }
 }

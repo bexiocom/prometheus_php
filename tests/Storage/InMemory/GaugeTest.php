@@ -50,7 +50,8 @@ class GaugeTest extends \PHPUnit_Framework_TestCase
     public function testIncrement(Gauge $metric, $expected)
     {
         $this->subject->inc($metric);
-        $sample = $this->subject->collectSample($metric);
+        $samples = $this->subject->collectSamples($metric);
+        $sample = reset($samples);
         $this->assertEquals($expected, $sample->getValue());
     }
 
@@ -76,7 +77,8 @@ class GaugeTest extends \PHPUnit_Framework_TestCase
     {
         $metric->dec();
         $this->subject->persist($metric);
-        $sample = $this->subject->collectSample($metric);
+        $samples = $this->subject->collectSamples($metric);
+        $sample = reset($samples);
         $this->assertEquals($expected, $sample->getValue());
     }
 
@@ -103,7 +105,8 @@ class GaugeTest extends \PHPUnit_Framework_TestCase
     {
         $metric->add($value);
         $this->subject->persist($metric);
-        $sample = $this->subject->collectSample($metric);
+        $samples = $this->subject->collectSamples($metric);
+        $sample = reset($samples);
         $this->assertEquals($expected, $sample->getValue());
     }
 
@@ -130,7 +133,8 @@ class GaugeTest extends \PHPUnit_Framework_TestCase
     {
         $metric->sub($value);
         $this->subject->persist($metric);
-        $sample = $this->subject->collectSample($metric);
+        $samples = $this->subject->collectSamples($metric);
+        $sample = reset($samples);
         $this->assertEquals($expected, $sample->getValue());
     }
 
@@ -156,7 +160,8 @@ class GaugeTest extends \PHPUnit_Framework_TestCase
     {
         $metric->set($value);
         $this->subject->persist($metric);
-        $sample = $this->subject->collectSample($metric);
+        $samples = $this->subject->collectSamples($metric);
+        $sample = reset($samples);
         $this->assertEquals($value, $sample->getValue());
     }
 
@@ -182,7 +187,8 @@ class GaugeTest extends \PHPUnit_Framework_TestCase
      */
     public function testSamples(Gauge $metric, $name, array $labels, $value)
     {
-        $sample = $this->subject->collectSample($metric);
+        $samples = $this->subject->collectSamples($metric);
+        $sample = reset($samples);
         $this->assertEquals($name, $sample->getName());
         $this->assertEquals($labels, $sample->getLabels());
         $this->assertEquals($value, $sample->getValue());
@@ -197,7 +203,7 @@ class GaugeTest extends \PHPUnit_Framework_TestCase
             'foo',
         ), 'foo', 'bar');
 
-        $samples = $this->subject->collectCollectionSamples($collection);
+        $samples = $this->subject->collectSamples($collection);
 
         $this->assertEquals(array(
             Sample::createFromOptions($collection->getOptions(), 3),
@@ -226,12 +232,12 @@ class GaugeTest extends \PHPUnit_Framework_TestCase
 
         $this->subject->persist($collection);
 
-        $fooSample = $this->subject->collectSample($foo);
-        $barSample = $this->subject->collectSample($bar);
-        $bazSample = $this->subject->collectSample($baz);
-        $this->assertEquals(-3, $fooSample->getValue());
-        $this->assertEquals(2, $barSample->getValue());
-        $this->assertEquals(4, $bazSample->getValue());
+        $fooSamples = $this->subject->collectSamples($foo);
+        $barSamples = $this->subject->collectSamples($bar);
+        $bazSamples = $this->subject->collectSamples($baz);
+        $this->assertEquals(-3, reset($fooSamples)->getValue());
+        $this->assertEquals(2, reset($barSamples)->getValue());
+        $this->assertEquals(4, reset($bazSamples)->getValue());
     }
 
     /**

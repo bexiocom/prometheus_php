@@ -93,4 +93,12 @@ class Gauge extends Metric implements Incrementable, Decrementable, Addable, Sub
     {
         $this->actions[] = Set::createFromValue($this, $value);
     }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getType()
+    {
+        return 'gauge';
+    }
 }

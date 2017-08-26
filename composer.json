@@ -19,7 +19,9 @@
             "Bexio\\PrometheusPHP\\Tests\\": "tests"
         }
     },
-    "require": {},
+    "require": {
+        "guzzlehttp/streams": "^3.0"
+    },
     "require-dev": {
         "phpmd/phpmd": "^2.6",
         "phpunit/phpunit": "^4.0",

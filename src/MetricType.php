@@ -27,4 +27,11 @@ interface MetricType
      * Clears the internal stack of change actions.
      */
     public function clear();
+
+    /**
+     * The metric type identifier.
+     *
+     * @return string
+     */
+    public function getType();
 }
