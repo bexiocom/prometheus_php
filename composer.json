@@ -25,6 +25,7 @@
     "require-dev": {
         "ext-redis": "*",
 
+        "codeclimate/php-test-reporter": "^0.4.4",
         "phpmd/phpmd": "^2.6",
         "phpunit/phpunit": "^4.0",
         "sebastian/phpcpd": "^2.0",
