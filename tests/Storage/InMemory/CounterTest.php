@@ -8,6 +8,7 @@ namespace Bexio\PrometheusPHP\Tests\Storage\InMemory;
 
 use Bexio\PrometheusPHP\Metric\Counter;
 use Bexio\PrometheusPHP\Metric\CounterCollection;
+use Bexio\PrometheusPHP\Sample;
 use Bexio\PrometheusPHP\Storage\InMemory;
 
 class CounterTest extends \PHPUnit_Framework_TestCase
@@ -107,6 +108,24 @@ class CounterTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($name, $sample->getName());
         $this->assertEquals($labels, $sample->getLabels());
         $this->assertEquals($value, $sample->getValue());
+    }
+
+    /**
+     * Test retrieval of collection samples.
+     */
+    public function testCollectionSamples()
+    {
+        $collection = CounterCollection::createFromValues('baz', 'Just a counter collection for testing', array(
+            'foo',
+        ), 'foo', 'bar');
+
+        $samples = $this->subject->collectCollectionSamples($collection);
+
+        $this->assertEquals(array(
+            Sample::createFromOptions($collection->getOptions(), 3),
+            Sample::createFromOptions($collection->getOptions()->withLabels(array('foo' => 'bar')), 5),
+            Sample::createFromOptions($collection->getOptions()->withLabels(array('foo' => 'baz')), 7),
+        ), $samples);
     }
 
     /**

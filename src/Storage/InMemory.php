@@ -6,6 +6,7 @@
 
 namespace Bexio\PrometheusPHP\Storage;
 
+use Bexio\PrometheusPHP\MetricTypeCollection;
 use Bexio\PrometheusPHP\Sample;
 use Bexio\PrometheusPHP\Type\Addable;
 use Bexio\PrometheusPHP\Type\Decrementable;
@@ -23,6 +24,8 @@ use Bexio\PrometheusPHP\Type\Subtractable;
  */
 class InMemory implements StorageAdapter
 {
+    const DEFAULT_VALUE_INDEX = 'default';
+
     /**
      * @var array
      */
@@ -133,9 +136,7 @@ class InMemory implements StorageAdapter
     }
 
     /**
-     * @param MetricType $metric
-     *
-     * @return Sample
+     * {@inheritdoc}
      */
     public function collectSample(MetricType $metric)
     {
@@ -146,5 +147,27 @@ class InMemory implements StorageAdapter
             : null;
 
         return Sample::createFromOptions($metric->getOptions(), $value);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function collectCollectionSamples(MetricTypeCollection $collection)
+    {
+        $name = $collection->getOptions()->getFullyQualifiedName();
+        $result = array();
+
+        if (isset($this->data[$name])) {
+            foreach ($this->data[$name] as $key => $value) {
+                if ('default' == $key) {
+                    $result[] = Sample::createFromOptions($collection->getOptions(), $value);
+                } else {
+                    $metric = $collection->withLabels(json_decode($key, true));
+                    $result[] = Sample::createFromOptions($metric->getOptions(), $value);
+                }
+            }
+        }
+
+        return $result;
     }
 }
