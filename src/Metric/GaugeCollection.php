@@ -58,4 +58,12 @@ class GaugeCollection extends MetricCollection implements MetricTypeCollection
     {
         return Gauge::createFromOptions($options);
     }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getType()
+    {
+        return 'gauge';
+    }
 }

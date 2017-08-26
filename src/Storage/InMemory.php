@@ -138,7 +138,41 @@ class InMemory implements StorageAdapter
     /**
      * {@inheritdoc}
      */
-    public function collectSample(MetricType $metric)
+    public function collectSamples(MetricType $metric)
+    {
+        return $metric instanceof MetricTypeCollection ?
+            $this->collectCollectionSamples($metric)
+            : $this->collectSingleSamples($metric);
+    }
+
+    /**
+     * @param MetricTypeCollection $metric
+     *
+     * @return Sample[]
+     */
+    private function collectCollectionSamples(MetricTypeCollection $metric)
+    {
+        $result = array();
+
+        $name = $metric->getOptions()->getFullyQualifiedName();
+        if (isset($this->data[$name])) {
+            foreach ($this->data[$name] as $key => $value) {
+                $options = 'default' == $key ?
+                    $metric->getOptions()
+                    : $metric->withLabels(json_decode($key, true))->getOptions();
+                $result[] = Sample::createFromOptions($options, $value);
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param MetricType $metric
+     *
+     * @return Sample[]
+     */
+    private function collectSingleSamples(MetricType $metric)
     {
         $name = $metric->getOptions()->getFullyQualifiedName();
         $labels = $this->getLabelsKey($metric->getOptions());
@@ -146,28 +180,6 @@ class InMemory implements StorageAdapter
             ? $this->data[$name][$labels]
             : null;
 
-        return Sample::createFromOptions($metric->getOptions(), $value);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function collectCollectionSamples(MetricTypeCollection $collection)
-    {
-        $name = $collection->getOptions()->getFullyQualifiedName();
-        $result = array();
-
-        if (isset($this->data[$name])) {
-            foreach ($this->data[$name] as $key => $value) {
-                if ('default' == $key) {
-                    $result[] = Sample::createFromOptions($collection->getOptions(), $value);
-                } else {
-                    $metric = $collection->withLabels(json_decode($key, true));
-                    $result[] = Sample::createFromOptions($metric->getOptions(), $value);
-                }
-            }
-        }
-
-        return $result;
+        return array(Sample::createFromOptions($metric->getOptions(), $value));
     }
 }

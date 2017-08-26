@@ -54,20 +54,11 @@ interface StorageAdapter
     public function sub(Subtractable $metric, $value);
 
     /**
-     * Collects sample of a single metric.
+     * Collects samples of a metric.
      *
      * @param MetricType $metric
      *
-     * @return Sample
-     */
-    public function collectSample(MetricType $metric);
-
-    /**
-     * Collects all samples of a metric collection.
-     *
-     * @param MetricTypeCollection $collection
-     *
      * @return Sample[]
      */
-    public function collectCollectionSamples(MetricTypeCollection $collection);
+    public function collectSamples(MetricType $metric);
 }

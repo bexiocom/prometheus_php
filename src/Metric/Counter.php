@@ -64,4 +64,12 @@ class Counter extends Metric implements Incrementable, Addable
     {
         $this->actions[] = Add::createFromValue($this, $value);
     }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getType()
+    {
+        return 'counter';
+    }
 }
