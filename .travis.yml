@@ -4,3 +4,13 @@ php:
   - "5.6"
   - "7.0"
   - "7.1"
+
+install:
+  - "composer install --prefer-dist --no-interaction --no-progress --no-suggest"
+
+script:
+  - "find src -type f -name '*.php' -print0 | xargs -0 -n1 php -l"
+  - "composer exec -v -- phpcs --standard=PSR2 src"
+  - "composer exec -v -- phpmd src text phpmd.xml"
+  - "composer exec -v -- phpcpd src"
+  - "composer exec -v  -- phpunit --coverage-text"
