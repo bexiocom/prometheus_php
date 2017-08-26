@@ -34,6 +34,7 @@ class CounterTest extends \PHPUnit_Framework_TestCase
         return array(
             array(CounterTest::getDefaultCounter(), 4),
             array(CounterTest::getLabeledCounter(), 6),
+            array(Counter::createFromValues('foo', null), 1),
         );
     }
 
@@ -59,6 +60,7 @@ class CounterTest extends \PHPUnit_Framework_TestCase
         return array(
             array(CounterTest::getDefaultCounter(), 5, 8),
             array(CounterTest::getLabeledCounter(), 7, 12),
+            array(Counter::createFromValues('foo', null), 3, 3),
         );
     }
 

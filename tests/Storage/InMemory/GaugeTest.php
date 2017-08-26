@@ -34,6 +34,7 @@ class GaugeTest extends \PHPUnit_Framework_TestCase
         return array(
             array(GaugeTest::getDefaultGauge(), 4),
             array(GaugeTest::getLabeledGauge(), 6),
+            array(Gauge::createFromValues('foo', null), 1),
         );
     }
 
@@ -58,6 +59,7 @@ class GaugeTest extends \PHPUnit_Framework_TestCase
         return array(
             array(GaugeTest::getDefaultGauge(), 2),
             array(GaugeTest::getLabeledGauge(), 4),
+            array(Gauge::createFromValues('foo', null), -1),
         );
     }
 
@@ -83,6 +85,7 @@ class GaugeTest extends \PHPUnit_Framework_TestCase
         return array(
             array(GaugeTest::getDefaultGauge(), 5, 8),
             array(GaugeTest::getLabeledGauge(), 7, 12),
+            array(Gauge::createFromValues('foo', null), 3, 3),
         );
     }
 
@@ -109,6 +112,7 @@ class GaugeTest extends \PHPUnit_Framework_TestCase
         return array(
             array(GaugeTest::getDefaultGauge(), 5, -2),
             array(GaugeTest::getLabeledGauge(), 3, 2),
+            array(Gauge::createFromValues('foo', null), 7, -7),
         );
     }
 
@@ -135,6 +139,7 @@ class GaugeTest extends \PHPUnit_Framework_TestCase
         return array(
             array(GaugeTest::getDefaultGauge(), 5),
             array(GaugeTest::getLabeledGauge(), 3),
+            array(Gauge::createFromValues('foo', null), 7),
         );
     }
 
