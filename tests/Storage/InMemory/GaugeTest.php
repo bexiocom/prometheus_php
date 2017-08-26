@@ -7,6 +7,7 @@
 namespace Bexio\PrometheusPHP\Tests\Storage\InMemory;
 
 use Bexio\PrometheusPHP\Metric\Gauge;
+use Bexio\PrometheusPHP\Metric\GaugeCollection;
 use Bexio\PrometheusPHP\Storage\InMemory;
 
 class GaugeTest extends \PHPUnit_Framework_TestCase
@@ -22,6 +23,7 @@ class GaugeTest extends \PHPUnit_Framework_TestCase
             'foo_bar_baz' => array(
                 'default' => 3,
                 '{"foo":"bar"}' => 5,
+                '{"foo":"baz"}' => 7,
             ),
         ));
     }
@@ -183,6 +185,34 @@ class GaugeTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($name, $sample->getName());
         $this->assertEquals($labels, $sample->getLabels());
         $this->assertEquals($value, $sample->getValue());
+    }
+
+    /**
+     * Tests persisting of a metric collection.
+     */
+    public function testPersistCollection()
+    {
+        $collection = GaugeCollection::createFromValues('baz', 'Just a counter collection for testing', array(
+            'foo',
+        ), 'foo', 'bar');
+
+        $foo = $collection->withLabels(array('foo' =>'foo'));
+        $foo->sub(3);
+
+        $bar = $collection->withLabels(array('foo' =>'bar'));
+        $bar->sub(3);
+
+        $baz = $collection->withLabels(array('foo' => 'baz'));
+        $baz->sub(3);
+
+        $this->subject->persist($collection);
+
+        $fooSample = $this->subject->collectSample($foo);
+        $barSample = $this->subject->collectSample($bar);
+        $bazSample = $this->subject->collectSample($baz);
+        $this->assertEquals(-3, $fooSample->getValue());
+        $this->assertEquals(2, $barSample->getValue());
+        $this->assertEquals(4, $bazSample->getValue());
     }
 
     /**

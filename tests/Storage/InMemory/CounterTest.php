@@ -7,6 +7,7 @@
 namespace Bexio\PrometheusPHP\Tests\Storage\InMemory;
 
 use Bexio\PrometheusPHP\Metric\Counter;
+use Bexio\PrometheusPHP\Metric\CounterCollection;
 use Bexio\PrometheusPHP\Storage\InMemory;
 
 class CounterTest extends \PHPUnit_Framework_TestCase
@@ -22,6 +23,7 @@ class CounterTest extends \PHPUnit_Framework_TestCase
             'foo_bar_baz' => array(
                 'default' => 3,
                 '{"foo":"bar"}' => 5,
+                '{"foo":"baz"}' => 7,
             ),
         ));
     }
@@ -105,6 +107,34 @@ class CounterTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($name, $sample->getName());
         $this->assertEquals($labels, $sample->getLabels());
         $this->assertEquals($value, $sample->getValue());
+    }
+
+    /**
+     * Tests persisting of a metric collection.
+     */
+    public function testPersistCollection()
+    {
+        $collection = CounterCollection::createFromValues('baz', 'Just a counter collection for testing', array(
+            'foo',
+        ), 'foo', 'bar');
+
+        $foo = $collection->withLabels(array('foo' => 'foo'));
+        $foo->inc();
+
+        $bar = $collection->withLabels(array('foo' =>'bar'));
+        $bar->inc();
+
+        $baz = $collection->withLabels(array('foo' => 'baz'));
+        $baz->inc();
+
+        $this->subject->persist($collection);
+
+        $fooSample = $this->subject->collectSample($foo);
+        $barSample = $this->subject->collectSample($bar);
+        $bazSample = $this->subject->collectSample($baz);
+        $this->assertEquals(1, $fooSample->getValue());
+        $this->assertEquals(6, $barSample->getValue());
+        $this->assertEquals(8, $bazSample->getValue());
     }
 
     /**

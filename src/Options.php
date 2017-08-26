@@ -127,4 +127,19 @@ abstract class Options
     {
         return $this->constantLabels;
     }
+
+    /**
+     * Gets a new Options instance with the given labels merge into the labels set.
+     *
+     * @param string[] $labels
+     *
+     * @return Options
+     */
+    public function withLabels(array $labels)
+    {
+        $options = clone $this;
+        $options->constantLabels = array_merge($this->constantLabels, $labels);
+
+        return $options;
+    }
 }
