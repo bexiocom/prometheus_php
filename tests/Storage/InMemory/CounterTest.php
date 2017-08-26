@@ -45,7 +45,8 @@ class CounterTest extends \PHPUnit_Framework_TestCase
      */
     public function testIncrement(Counter $metric, $expected)
     {
-        $this->subject->inc($metric);
+        $metric->inc();
+        $this->subject->persist($metric);
         $sample = $this->subject->collectSample($metric);
         $this->assertEquals($expected, $sample->getValue());
     }
@@ -70,7 +71,8 @@ class CounterTest extends \PHPUnit_Framework_TestCase
      */
     public function testAddition(Counter $metric, $value, $expected)
     {
-        $this->subject->add($metric, $value);
+        $metric->add($value);
+        $this->subject->persist($metric);
         $sample = $this->subject->collectSample($metric);
         $this->assertEquals($expected, $sample->getValue());
     }

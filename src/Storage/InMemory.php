@@ -41,6 +41,18 @@ class InMemory implements StorageAdapter
     /**
      * {@inheritdoc}
      */
+    public function persist(MetricType $metric)
+    {
+        foreach ($metric->getActions() as $action) {
+            $action->execute($this);
+        }
+
+        $metric->clear();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function inc(Incrementable $metric)
     {
         $this->withIndex($metric, function ($name, $labels) {

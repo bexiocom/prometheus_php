@@ -69,7 +69,8 @@ class GaugeTest extends \PHPUnit_Framework_TestCase
      */
     public function testDecrement(Gauge $metric, $expected)
     {
-        $this->subject->dec($metric);
+        $metric->dec();
+        $this->subject->persist($metric);
         $sample = $this->subject->collectSample($metric);
         $this->assertEquals($expected, $sample->getValue());
     }
@@ -94,7 +95,8 @@ class GaugeTest extends \PHPUnit_Framework_TestCase
      */
     public function testAddition(Gauge $metric, $value, $expected)
     {
-        $this->subject->add($metric, $value);
+        $metric->add($value);
+        $this->subject->persist($metric);
         $sample = $this->subject->collectSample($metric);
         $this->assertEquals($expected, $sample->getValue());
     }
@@ -119,7 +121,8 @@ class GaugeTest extends \PHPUnit_Framework_TestCase
      */
     public function testSubtraction(Gauge $metric, $value, $expected)
     {
-        $this->subject->sub($metric, $value);
+        $metric->sub($value);
+        $this->subject->persist($metric);
         $sample = $this->subject->collectSample($metric);
         $this->assertEquals($expected, $sample->getValue());
     }
@@ -143,7 +146,8 @@ class GaugeTest extends \PHPUnit_Framework_TestCase
      */
     public function testSetter(Gauge $metric, $value)
     {
-        $this->subject->set($metric, $value);
+        $metric->set($value);
+        $this->subject->persist($metric);
         $sample = $this->subject->collectSample($metric);
         $this->assertEquals($value, $sample->getValue());
     }

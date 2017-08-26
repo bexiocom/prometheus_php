@@ -17,6 +17,14 @@ use Bexio\PrometheusPHP\Type\Subtractable;
  */
 interface StorageAdapter
 {
+
+    /**
+     * Applies all the change actions.
+     *
+     * @param MetricType $metric
+     */
+    public function persist(MetricType $metric);
+
     /**
      * @param Incrementable $metric
      */

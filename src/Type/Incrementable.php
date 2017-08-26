@@ -13,5 +13,8 @@ use Bexio\PrometheusPHP\MetricType;
  */
 interface Incrementable extends MetricType
 {
-
+    /**
+     * Increase the metric value by one.
+     */
+    public function inc();
 }

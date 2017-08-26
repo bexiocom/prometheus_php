@@ -6,10 +6,15 @@
 
 namespace Bexio\PrometheusPHP\Metric;
 
+use Bexio\PrometheusPHP\Action\Add;
+use Bexio\PrometheusPHP\Action\Decrement;
+use Bexio\PrometheusPHP\Action\Increment;
+use Bexio\PrometheusPHP\Action\Set;
+use Bexio\PrometheusPHP\Action\Subtract;
+use Bexio\PrometheusPHP\Metric;
 use Bexio\PrometheusPHP\Type\Addable;
 use Bexio\PrometheusPHP\Type\Decrementable;
 use Bexio\PrometheusPHP\Type\Incrementable;
-use Bexio\PrometheusPHP\Options;
 use Bexio\PrometheusPHP\Type\Settable;
 use Bexio\PrometheusPHP\Type\Subtractable;
 
@@ -21,13 +26,8 @@ use Bexio\PrometheusPHP\Type\Subtractable;
  * A Gauge is typically used for measured values like temperatures or current memory usage, but also "counts" that can
  * go up and down, like request durations.
  */
-class Gauge implements Incrementable, Decrementable, Addable, Subtractable, Settable
+class Gauge extends Metric implements Incrementable, Decrementable, Addable, Subtractable, Settable
 {
-    /**
-     * @var Options
-     */
-    private $options;
-
     /**
      * @param string   $name      The metric name
      * @param string   $help      The help information for this metric.
@@ -55,20 +55,42 @@ class Gauge implements Incrementable, Decrementable, Addable, Subtractable, Sett
     }
 
     /**
-     * Constructor.
-     *
-     * @param Options $options
+     * {@inheritdoc}
      */
-    private function __construct(Options $options)
+    public function inc()
     {
-        $this->options = $options;
+        $this->actions[] = Increment::createFromValue($this);
     }
 
     /**
-     * @return Options
+     * {@inheritdoc}
      */
-    public function getOptions()
+    public function dec()
     {
-        return $this->options;
+        $this->actions[] = Decrement::createFromValue($this);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function add($value)
+    {
+        $this->actions[] = Add::createFromValue($this, $value);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function sub($value)
+    {
+        $this->actions[] = Subtract::createFromValue($this, $value);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function set($value)
+    {
+        $this->actions[] = Set::createFromValue($this, $value);
     }
 }

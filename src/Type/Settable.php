@@ -13,5 +13,10 @@ use Bexio\PrometheusPHP\MetricType;
  */
 interface Settable extends MetricType
 {
-
+    /**
+     * Set the metric value to the given number.
+     *
+     * @param float $value
+     */
+    public function set($value);
 }

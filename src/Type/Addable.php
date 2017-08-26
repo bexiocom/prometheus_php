@@ -13,5 +13,10 @@ use Bexio\PrometheusPHP\MetricType;
  */
 interface Addable extends MetricType
 {
-
+    /**
+     * Increase the metric value by the given amount.
+     *
+     * @param float $value
+     */
+    public function add($value);
 }

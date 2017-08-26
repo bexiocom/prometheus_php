@@ -6,9 +6,11 @@
 
 namespace Bexio\PrometheusPHP\Metric;
 
+use Bexio\PrometheusPHP\Action\Add;
+use Bexio\PrometheusPHP\Action\Increment;
+use Bexio\PrometheusPHP\Metric;
 use Bexio\PrometheusPHP\Type\Addable;
 use Bexio\PrometheusPHP\Type\Incrementable;
-use Bexio\PrometheusPHP\Options;
 
 /**
  * Counter Metric
@@ -19,13 +21,8 @@ use Bexio\PrometheusPHP\Options;
  *
  * A Counter is typically used to count requests served, tasks completed, errors occurred, etc.
  */
-class Counter implements Incrementable, Addable
+class Counter extends Metric implements Incrementable, Addable
 {
-    /**
-     * @var Options
-     */
-    private $options;
-
     /**
      * @param string   $name      The metric name
      * @param string   $help      The help information for this metric.
@@ -53,20 +50,18 @@ class Counter implements Incrementable, Addable
     }
 
     /**
-     * Constructor.
-     *
-     * @param Options $options
+     * {@inheritdoc}
      */
-    private function __construct(Options $options)
+    public function inc()
     {
-        $this->options = $options;
+        $this->actions[] = Increment::createFromValue($this);
     }
 
     /**
-     * @return Options
+     * {@inheritdoc}
      */
-    public function getOptions()
+    public function add($value)
     {
-        return $this->options;
+        $this->actions[] = Add::createFromValue($this, $value);
     }
 }

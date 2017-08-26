@@ -13,5 +13,8 @@ use Bexio\PrometheusPHP\MetricType;
  */
 interface Decrementable extends MetricType
 {
-
+    /**
+     * Decrease the metric value by one.
+     */
+    public function dec();
 }

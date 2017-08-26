@@ -13,5 +13,10 @@ use Bexio\PrometheusPHP\MetricType;
  */
 interface Subtractable extends MetricType
 {
-
+    /**
+     * Decrease the metric value by the given amount.
+     *
+     * @param float $value
+     */
+    public function sub($value);
 }

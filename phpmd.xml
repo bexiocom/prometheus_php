@@ -11,11 +11,6 @@
     <rule ref="rulesets/cleancode.xml">
         <exclude name="StaticAccess" />
     </rule>
-    <rule ref="rulesets/cleancode.xml/StaticAccess">
-        <properties>
-            <property name="exceptions" value="\Bexio\PrometheusPHP\Sample" />
-        </properties>
-    </rule>
     <rule ref="rulesets/codesize.xml">
         <exclude name="ExcessiveMethodLength" />
         <exclude name="TooManyPublicMethods" />

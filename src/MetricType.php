@@ -17,4 +17,14 @@ interface MetricType
      * @return Options
      */
     public function getOptions();
+
+    /**
+     * @return Action[]
+     */
+    public function getActions();
+
+    /**
+     * Clears the internal stack of change actions.
+     */
+    public function clear();
 }
