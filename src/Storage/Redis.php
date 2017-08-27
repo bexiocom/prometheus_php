@@ -6,6 +6,7 @@
 
 namespace Bexio\PrometheusPHP\Storage;
 
+use Bexio\PrometheusPHP\Exception\StorageException;
 use Bexio\PrometheusPHP\MetricType;
 use Bexio\PrometheusPHP\MetricTypeCollection;
 use Bexio\PrometheusPHP\Options;
@@ -73,7 +74,11 @@ class Redis implements StorageAdapter
     public function inc(Incrementable $metric)
     {
         $this->openConnection();
-        $this->redis->hIncrByFloat($this->getMetrickey($metric), $this->getLabelsKey($metric), 1);
+        try {
+            $this->redis->hIncrByFloat($this->getMetrickey($metric), $this->getLabelsKey($metric), 1);
+        } catch (\Exception $e) {
+            throw new StorageException('Failed to increment metric value', 0, $e);
+        }
     }
 
     /**
@@ -82,7 +87,11 @@ class Redis implements StorageAdapter
     public function dec(Decrementable $metric)
     {
         $this->openConnection();
-        $this->redis->hIncrByFloat($this->getMetrickey($metric), $this->getLabelsKey($metric), -1);
+        try {
+            $this->redis->hIncrByFloat($this->getMetrickey($metric), $this->getLabelsKey($metric), -1);
+        } catch (\Exception $e) {
+            throw new StorageException('Failed to decrement metric value', 0, $e);
+        }
     }
 
     /**
@@ -91,7 +100,11 @@ class Redis implements StorageAdapter
     public function set(Settable $metric, $value)
     {
         $this->openConnection();
-        $this->redis->hSet($this->getMetrickey($metric), $this->getLabelsKey($metric), $value);
+        try {
+            $this->redis->hSet($this->getMetrickey($metric), $this->getLabelsKey($metric), $value);
+        } catch (\Exception $e) {
+            throw new StorageException('Failed to set metric value', 0, $e);
+        }
     }
 
     /**
@@ -100,7 +113,11 @@ class Redis implements StorageAdapter
     public function add(Addable $metric, $value)
     {
         $this->openConnection();
-        $this->redis->hIncrByFloat($this->getMetrickey($metric), $this->getLabelsKey($metric), $value);
+        try {
+            $this->redis->hIncrByFloat($this->getMetrickey($metric), $this->getLabelsKey($metric), $value);
+        } catch (\Exception $e) {
+            throw new StorageException('Failed to add metric value', 0, $e);
+        }
     }
 
     /**
@@ -109,7 +126,11 @@ class Redis implements StorageAdapter
     public function sub(Subtractable $metric, $value)
     {
         $this->openConnection();
-        $this->redis->hIncrByFloat($this->getMetrickey($metric), $this->getLabelsKey($metric), $value * -1);
+        try {
+            $this->redis->hIncrByFloat($this->getMetrickey($metric), $this->getLabelsKey($metric), $value * -1);
+        } catch (\Exception $e) {
+            throw new StorageException('Failed to subtract metric value', 0, $e);
+        }
     }
 
     /**
@@ -118,11 +139,15 @@ class Redis implements StorageAdapter
     public function collectSamples(MetricType $metric)
     {
         $this->openConnection();
-        $result = $this->redis->hGetAll($this->getMetrickey($metric));
+        try {
+            $result = $this->redis->hGetAll($this->getMetrickey($metric));
 
-        return $metric instanceof MetricTypeCollection ?
-            $this->collectCollectionSamples($metric, $result)
-            : $this->collectSingleSamples($metric, $result);
+            return $metric instanceof MetricTypeCollection ?
+                $this->collectCollectionSamples($metric, $result)
+                : $this->collectSingleSamples($metric, $result);
+        } catch (\Exception $e) {
+            throw new StorageException('Failed to collect metric samples', 0, $e);
+        }
     }
 
     /**
@@ -162,13 +187,17 @@ class Redis implements StorageAdapter
     }
 
 
-        /**
-     * Opens the redis connection.
+    /**
+     * Opens the Redis connection.
      */
     private function openConnection()
     {
         if ($this->openConnectionFunction) {
-            call_user_func($this->openConnectionFunction, $this->redis);
+            try {
+                call_user_func($this->openConnectionFunction, $this->redis);
+            } catch (\Exception $e) {
+                throw new StorageException('Failed to connect to Redis', 0, $e);
+            }
         }
     }
 
