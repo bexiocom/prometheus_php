@@ -6,6 +6,7 @@
 
 namespace Bexio\PrometheusPHP;
 
+use Bexio\PrometheusPHP\Exception\StorageException;
 use Bexio\PrometheusPHP\Type\Addable;
 use Bexio\PrometheusPHP\Type\Decrementable;
 use Bexio\PrometheusPHP\Type\Incrementable;
@@ -22,34 +23,46 @@ interface StorageAdapter
      * Applies all the change actions.
      *
      * @param MetricType $metric
+     *
+     * @throws StorageException
      */
     public function persist(MetricType $metric);
 
     /**
      * @param Incrementable $metric
+     *
+     * @throws StorageException
      */
     public function inc(Incrementable $metric);
 
     /**
      * @param Decrementable $metric
+     *
+     * @throws StorageException
      */
     public function dec(Decrementable $metric);
 
     /**
      * @param Settable $metric
-     * @param float $value
+     * @param float    $value
+     *
+     * @throws StorageException
      */
     public function set(Settable $metric, $value);
 
     /**
      * @param Addable $metric
-     * @param float  $value
+     * @param float   $value
+     *
+     * @throws StorageException
      */
     public function add(Addable $metric, $value);
 
     /**
      * @param Subtractable $metric
-     * @param float $value
+     * @param float        $value
+     *
+     * @throws StorageException
      */
     public function sub(Subtractable $metric, $value);
 
@@ -59,6 +72,8 @@ interface StorageAdapter
      * @param MetricType $metric
      *
      * @return Sample[]
+     *
+     * @throws StorageException
      */
     public function collectSamples(MetricType $metric);
 }
