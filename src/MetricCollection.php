@@ -6,7 +6,7 @@
 
 namespace Bexio\PrometheusPHP;
 
-use Bexio\PrometheusPHP\Exception\LabelMismatch;
+use Bexio\PrometheusPHP\Exception\LabelMismatchException;
 use Bexio\PrometheusPHP\Metric\Counter;
 use Bexio\PrometheusPHP\Metric\CounterOptions;
 
@@ -61,7 +61,9 @@ abstract class MetricCollection implements MetricTypeCollection
             $metricOptions = $this->options->withLabels($labels);
             $labelNames = array_keys($metricOptions->getLabels());
             if (array_diff($labelNames, $this->labels) || array_diff($this->labels, $labelNames)) {
-                throw new LabelMismatch('Can not get metric with label set differing from the one of the collection');
+                throw new LabelMismatchException(
+                    'Can not get metric with label set differing from the one of the collection'
+                );
             }
 
             $this->metrics[$index] = $this->createMetricFromOptions($metricOptions);

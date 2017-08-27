@@ -6,6 +6,8 @@
 
 namespace Bexio\PrometheusPHP;
 
+use Bexio\PrometheusPHP\Exception\LabelMismatchException;
+
 /**
  * Collection of metrics sharing the same name and set of label names.
  *
@@ -21,6 +23,9 @@ interface MetricTypeCollection extends MetricType
      * @param string[] $labels
      *
      * @return MetricType
+     *
+     * @throws LabelMismatchException The set of labels must match the one of the collection.
+     *                                This exception is thrown if this constraint would be violated.
      */
     public function withLabels(array $labels);
 }
