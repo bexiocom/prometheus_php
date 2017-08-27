@@ -1,0 +1,4 @@
+/*.xml* export-ignore
+/.* export-ignore
+/_* export-ignore
+/tests export-ignore
