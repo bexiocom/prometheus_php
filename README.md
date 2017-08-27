@@ -1,7 +1,9 @@
 # A Prometheus client library for PHP
 
-[![Build Status](https://travis-ci.org/bexiocom/prometheus_php.svg?branch=master)](https://travis-ci.org/bexiocom/prometheus_php)
-[![Code Climate](https://codeclimate.com/github/bexiocom/prometheus_php.png)](https://codeclimate.com/github/bexiocom/prometheus_php)
+[![Build Status](https://img.shields.io/travis/bexiocom/prometheus_php.svg)](https://travis-ci.org/bexiocom/prometheus_php)
+[![Code Climate](https://img.shields.io/codeclimate/github/bexiocom/prometheus_php.svg)](https://codeclimate.com/github/bexiocom/prometheus_php)
+[![Test Coverage](https://img.shields.io/codeclimate/coverage/github/bexiocom/prometheus_php.svg)](https://codeclimate.com/github/bexiocom/prometheus_php/coverage)
+[![Latest Stable Version](https://img.shields.io/packagist/v/bexiocom/prometheus_php.svg)](https://packagist.org/packages/bexiocom/prometheus_php)
 
 This library aims to be a lightweight utility for instrumenting a PHP
 application using [Prometheus](https://prometheus.io). It is heavily inspired
