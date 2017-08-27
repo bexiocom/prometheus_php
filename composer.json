@@ -3,12 +3,26 @@
     "description": "A PHP instrumentation library for Prometheus compatible with PHP 5.5 5.6, 7.0 and 7.1.",
     "type": "library",
     "license": "MIT",
+    "homepage": "https://bexiocom.github.io/prometheus_php/",
+    "keywords": ["monitoring", "prometheus"],
     "authors": [
         {
             "name": "Christian Haeusler",
             "email": "christian.haeusler@bexio.com"
         }
     ],
+    "support": {
+        "source": "https://github.com/bexiocom/prometheus_php",
+        "docs": "https://bexiocom.github.io/prometheus_php/"
+    },
+    "scripts": {
+        "check": ["@phpmd", "@phpcs", "@phpcpd", "@phpunit"],
+        "phpunit": "phpunit --coverage-html=build",
+        "phpmd": "phpmd src text phpmd.xml",
+        "phpcpd": "phpcpd src",
+        "phpcs": "phpcs --standard=PSR2 src tests",
+        "phpcs-fix": "phpcbf --standard=PSR2 src tests"
+    },
     "autoload": {
         "psr-4": {
             "Bexio\\PrometheusPHP\\": "src"
