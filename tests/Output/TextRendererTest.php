@@ -20,15 +20,9 @@ class TextRendererTest extends \PHPUnit_Framework_TestCase
      */
     private $subject;
 
-    /**
-     * @var BufferStream
-     */
-    private $buffer;
-
     protected function setUp()
     {
-        $this->buffer = new BufferStream();
-        $this->subject = TextRenderer::createFromStream($this->buffer);
+        $this->subject = new TextRenderer();
     }
 
     public function getRenderData()
@@ -115,8 +109,9 @@ EOF
      */
     public function testRender(MetricType $metric, array $data, $output)
     {
+        $buffer = new BufferStream();
         $storage = new InMemory($data);
-        $this->subject->render($metric, $storage->collectSamples($metric));
-        $this->assertEquals($output, $this->buffer->getContents());
+        $this->subject->render($metric, $storage->collectSamples($metric), $buffer);
+        $this->assertEquals($output, $buffer->getContents());
     }
 }

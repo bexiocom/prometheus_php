@@ -25,37 +25,13 @@ class TextRenderer implements Renderer
 # TYPE %1\$s %s
 
 EOF;
-
-    /**
-     * @var StreamInterface
-     */
-    private $stream;
-
     /**
      * {@inheritdoc}
      */
-    public static function createFromStream(StreamInterface $stream)
-    {
-        return new TextRenderer($stream);
-    }
-
-    /**
-     * Constructor.
-     *
-     * @param StreamInterface $stream
-     */
-    private function __construct(StreamInterface $stream)
-    {
-        $this->stream = $stream;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function render(MetricType $metric, array $samples)
+    public function render(MetricType $metric, array $samples, StreamInterface $stream)
     {
         $options = $metric->getOptions();
-        $this->stream->write(sprintf(
+        $stream->write(sprintf(
             TextRenderer::METADATA,
             $options->getFullyQualifiedName(),
             $options->getHelp(),
@@ -63,7 +39,7 @@ EOF;
         ));
 
         foreach ($samples as $sample) {
-            $this->stream->write($this->getSampleLine($sample));
+            $stream->write($this->getSampleLine($sample));
         }
     }
 
