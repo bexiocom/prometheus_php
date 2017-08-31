@@ -149,7 +149,7 @@ EOF;
                 $value,
             ));
         } catch (\Exception $e) {
-            throw new StorageException('Failed to subtract metric value', 0, $e);
+            throw new StorageException('Failed to update Histogram', 0, $e);
         }
     }
 
