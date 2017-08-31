@@ -28,7 +28,7 @@ abstract class ArrayStorage implements StorageAdapter
     {
         $options = $metric->getOptions();
         $labels = $options->getLabels();
-        if ($options instanceof HistogramOptions) {
+        if ($options instanceof HistogramOptions && null !== $value) {
             $buckets = $options->getBuckets();
             $bucket = '+Inf';
             foreach ($buckets as $le) {
@@ -39,6 +39,19 @@ abstract class ArrayStorage implements StorageAdapter
             }
             $labels = array_merge($labels, array('le' => $bucket));
         }
+
+        return $this->getLabelsKeyFromArray($labels);
+    }
+
+    /**
+     * Gets a unique identifier a set of labels.
+     *
+     * @param string[] $labels
+     *
+     * @return string
+     */
+    protected function getLabelsKeyFromArray(array $labels)
+    {
         ksort($labels);
 
         return empty($labels) ? ArrayStorage::DEFAULT_VALUE_INDEX : json_encode($labels);
@@ -112,6 +125,23 @@ abstract class ArrayStorage implements StorageAdapter
             $samples[] = Sample::createFromOptions($collectOptions, $value);
         }
 
+        if ($options instanceof HistogramOptions) {
+            $sumData = $this->getData($metric, '_sum');
+            $sumLabelsKey = $this->getLabelsKeyFromArray($options->getLabels());
+            $sumValue = isset($sumData[$sumLabelsKey]) ? $sumData[$sumLabelsKey] : null;
+
+            $samples[] = Sample::createFromValues(
+                $options->getFullyQualifiedName().'_sum',
+                $options->getLabels(),
+                $sumValue
+            );
+            $samples[] = Sample::createFromValues(
+                $options->getFullyQualifiedName().'_count',
+                $options->getLabels(),
+                $sum
+            );
+        }
+
         return $samples;
     }
 
@@ -119,10 +149,11 @@ abstract class ArrayStorage implements StorageAdapter
      * Gets the data array for a metric.
      *
      * @param MetricType $metric
+     * @param string     $suffix
      *
      * @return float[]
      */
-    abstract protected function getData(MetricType $metric);
+    abstract protected function getData(MetricType $metric, $suffix = '');
 
     /**
      * Gets the value keys for a metric.

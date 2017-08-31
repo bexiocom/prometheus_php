@@ -11,6 +11,7 @@ use Bexio\PrometheusPHP\Metric\CounterCollection;
 use Bexio\PrometheusPHP\Metric\Histogram;
 use Bexio\PrometheusPHP\Metric\HistogramCollection;
 use Bexio\PrometheusPHP\Sample;
+use Bexio\PrometheusPHP\Storage\ArrayStorage;
 use Bexio\PrometheusPHP\Storage\InMemory;
 
 class HistogramTest extends \PHPUnit_Framework_TestCase
@@ -32,6 +33,11 @@ class HistogramTest extends \PHPUnit_Framework_TestCase
                 '{"foo":"bar","le":"+Inf"}' => 5,
                 '{"foo":"baz","le":10}' => 17,
             ),
+            'foo_bar_baz_sum' => array(
+                ArrayStorage::DEFAULT_VALUE_INDEX => 228,
+                '{"foo":"bar"}' => 467,
+                '{"foo":"baz"}' => 85,
+            ),
         ));
     }
 
@@ -51,45 +57,49 @@ class HistogramTest extends \PHPUnit_Framework_TestCase
         $nullInfBucketResults = array(0 , 0 , 1);
 
         return array(
-            array(HistogramTest::getDefaultHistogram(), 0.001, $defaultLowBucketResults),
-            array(HistogramTest::getDefaultHistogram(), 0.999, $defaultLowBucketResults),
-            array(HistogramTest::getDefaultHistogram(), 1, $defaultLowBucketResults),
-            array(HistogramTest::getDefaultHistogram(), 1.001, $defaultHighBucketResults),
-            array(HistogramTest::getDefaultHistogram(), 9.999, $defaultHighBucketResults),
-            array(HistogramTest::getDefaultHistogram(), 10, $defaultHighBucketResults),
-            array(HistogramTest::getDefaultHistogram(), 11.001, $defaultInfBucketResults),
-            array(HistogramTest::getDefaultHistogram(), 11, $defaultInfBucketResults),
-            array(HistogramTest::getLabeledHistogram(), 0.001, $labeledLowBucketResults),
-            array(HistogramTest::getLabeledHistogram(), 0.999, $labeledLowBucketResults),
-            array(HistogramTest::getLabeledHistogram(), 1, $labeledLowBucketResults),
-            array(HistogramTest::getLabeledHistogram(), 1.001, $labeledHighBucketResults),
-            array(HistogramTest::getLabeledHistogram(), 9.999, $labeledHighBucketResults),
-            array(HistogramTest::getLabeledHistogram(), 10, $labeledHighBucketResults),
-            array(HistogramTest::getLabeledHistogram(), 11.001, $labeledInfBucketResults),
-            array(HistogramTest::getLabeledHistogram(), 11, $labeledInfBucketResults),
-            array(Histogram::createFromValues('foo', null, array(1, 10)), 0.001, $nullLowBucketResults),
-            array(Histogram::createFromValues('foo', null, array(1, 10)), 0.999, $nullLowBucketResults),
-            array(Histogram::createFromValues('foo', null, array(1, 10)), 1, $nullLowBucketResults),
-            array(Histogram::createFromValues('foo', null, array(1, 10)), 1.001, $nullHighBucketResults),
-            array(Histogram::createFromValues('foo', null, array(1, 10)), 9.999, $nullHighBucketResults),
-            array(Histogram::createFromValues('foo', null, array(1, 10)), 10, $nullHighBucketResults),
-            array(Histogram::createFromValues('foo', null, array(1, 10)), 11.001, $nullInfBucketResults),
-            array(Histogram::createFromValues('foo', null, array(1, 10)), 11, $nullInfBucketResults),
+            array(HistogramTest::getDefaultHistogram(), 0.001, $defaultLowBucketResults, 228.001),
+            array(HistogramTest::getDefaultHistogram(), 0.999, $defaultLowBucketResults, 228.999),
+            array(HistogramTest::getDefaultHistogram(), 1, $defaultLowBucketResults, 229),
+            array(HistogramTest::getDefaultHistogram(), 1.001, $defaultHighBucketResults, 229.001),
+            array(HistogramTest::getDefaultHistogram(), 9.999, $defaultHighBucketResults, 237.999),
+            array(HistogramTest::getDefaultHistogram(), 10, $defaultHighBucketResults, 238),
+            array(HistogramTest::getDefaultHistogram(), 11.001, $defaultInfBucketResults, 239.001),
+            array(HistogramTest::getDefaultHistogram(), 11, $defaultInfBucketResults, 239),
+            array(HistogramTest::getLabeledHistogram(), 0.001, $labeledLowBucketResults, 467.001),
+            array(HistogramTest::getLabeledHistogram(), 0.999, $labeledLowBucketResults, 467.999),
+            array(HistogramTest::getLabeledHistogram(), 1, $labeledLowBucketResults, 468),
+            array(HistogramTest::getLabeledHistogram(), 1.001, $labeledHighBucketResults, 468.001),
+            array(HistogramTest::getLabeledHistogram(), 9.999, $labeledHighBucketResults, 476.999),
+            array(HistogramTest::getLabeledHistogram(), 10, $labeledHighBucketResults, 477),
+            array(HistogramTest::getLabeledHistogram(), 11.001, $labeledInfBucketResults, 478.001),
+            array(HistogramTest::getLabeledHistogram(), 11, $labeledInfBucketResults, 478),
+            array(Histogram::createFromValues('foo', null, array(1, 10)), 0.001, $nullLowBucketResults, 0.001),
+            array(Histogram::createFromValues('foo', null, array(1, 10)), 0.999, $nullLowBucketResults, 0.999),
+            array(Histogram::createFromValues('foo', null, array(1, 10)), 1, $nullLowBucketResults, 1),
+            array(Histogram::createFromValues('foo', null, array(1, 10)), 1.001, $nullHighBucketResults, 1.001),
+            array(Histogram::createFromValues('foo', null, array(1, 10)), 9.999, $nullHighBucketResults, 9.999),
+            array(Histogram::createFromValues('foo', null, array(1, 10)), 10, $nullHighBucketResults, 10),
+            array(Histogram::createFromValues('foo', null, array(1, 10)), 11.001, $nullInfBucketResults, 11.001),
+            array(Histogram::createFromValues('foo', null, array(1, 10)), 11, $nullInfBucketResults, 11),
         );
     }
 
     /**
      * @param Histogram $metric
-     * @param float     $value    The observed value.
-     * @param float[]   $expected The expected bucket values.
+     * @param float     $value       The observed value.
+     * @param float[]   $expected    The expected bucket values.
+     * @param float     $expectedSum The expected histogram sum.
      *
      * @dataProvider getSingleData
      */
-    public function testSingle(Histogram $metric, $value, array $expected)
+    public function testSingle(Histogram $metric, $value, array $expected, $expectedSum)
     {
         $metric->observe($value);
         $this->subject->persist($metric);
         $samples = $this->subject->collectSamples($metric);
+        $count = end($expected);
+        $expected[] = $expectedSum;
+        $expected[] = $count;
         $this->assertEquals(count($expected), count($samples));
         for ($i = 0; $i < count($expected); $i++) {
             $this->assertEquals($expected[$i], $samples[$i]->getValue());
@@ -113,12 +123,18 @@ class HistogramTest extends \PHPUnit_Framework_TestCase
             Sample::createFromOptions($options->withLabels(array('le' => 1)), 7),
             Sample::createFromOptions($options->withLabels(array('le' => 10)), 12),
             Sample::createFromOptions($options->withLabels(array('le' => '+Inf')), 15),
+            Sample::createFromValues('foo_bar_baz_sum', array(), 228),
+            Sample::createFromValues('foo_bar_baz_count', array(), 15),
             Sample::createFromOptions($options->withLabels(array('foo' => 'bar', 'le' => 1)), 11),
             Sample::createFromOptions($options->withLabels(array('foo' => 'bar', 'le' => 10)), 18),
             Sample::createFromOptions($options->withLabels(array('foo' => 'bar', 'le' => '+Inf')), 23),
+            Sample::createFromValues('foo_bar_baz_sum', array('foo' => 'bar'), 467),
+            Sample::createFromValues('foo_bar_baz_count', array('foo' => 'bar'), 23),
             Sample::createFromOptions($options->withLabels(array('foo' => 'baz', 'le' => 1)), 0),
             Sample::createFromOptions($options->withLabels(array('foo' => 'baz', 'le' => 10)), 17),
             Sample::createFromOptions($options->withLabels(array('foo' => 'baz', 'le' => '+Inf')), 17),
+            Sample::createFromValues('foo_bar_baz_sum', array('foo' => 'baz'), 85),
+            Sample::createFromValues('foo_bar_baz_count', array('foo' => 'baz'), 17),
         ), $samples);
     }
 
@@ -127,7 +143,7 @@ class HistogramTest extends \PHPUnit_Framework_TestCase
      */
     private static function getDefaultHistogram()
     {
-        return Histogram::createFromValues('baz', null, array(1,10),'foo', 'bar');
+        return Histogram::createFromValues('baz', null, array(1,10), 'foo', 'bar');
     }
 
     /**
@@ -135,7 +151,7 @@ class HistogramTest extends \PHPUnit_Framework_TestCase
      */
     private static function getLabeledHistogram()
     {
-        return Histogram::createFromValues('baz', null, array(1,10),'foo', 'bar', array(
+        return Histogram::createFromValues('baz', null, array(1,10), 'foo', 'bar', array(
             'foo' => 'bar',
         ));
     }

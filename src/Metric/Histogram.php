@@ -36,8 +36,14 @@ class Histogram extends Metric implements Observable
      *
      * @return Histogram
      */
-    public static function createFromValues($name, $help, array $buckets = null, $namespace = null, $subsystem = null, array $labels = array())
-    {
+    public static function createFromValues(
+        $name,
+        $help,
+        array $buckets = null,
+        $namespace = null,
+        $subsystem = null,
+        array $labels = array()
+    ) {
         $options = new HistogramOptions($name, $help, $buckets, $namespace, $subsystem, $labels);
 
         return new Histogram($options);

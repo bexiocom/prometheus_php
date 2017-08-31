@@ -109,16 +109,20 @@ class InMemory extends ArrayStorage implements StorageAdapter
         $this->withIndex($metric, function ($name, $labels) {
             $this->data[$name][$labels]++;
         }, $value);
+        $this->withIndex($metric, function ($name, $labels) use ($value) {
+            $this->data[$name][$labels] += $value;
+        }, null, '_sum');
     }
 
     /**
      * @param MetricType $metric
      * @param callable   $function
      * @param float|null $value
+     * @param string     $suffix
      */
-    protected function withIndex(MetricType $metric, callable $function, $value = null)
+    protected function withIndex(MetricType $metric, callable $function, $value = null, $suffix = '')
     {
-        $name = $metric->getOptions()->getFullyQualifiedName();
+        $name = $metric->getOptions()->getFullyQualifiedName() . $suffix;
         $labels = $this->getLabelsKey($metric, $value);
         $this->ensureIndex($name, $labels);
         $function($name, $labels);
@@ -138,9 +142,9 @@ class InMemory extends ArrayStorage implements StorageAdapter
     /**
      * {@inheritdoc}
      */
-    protected function getData(MetricType $metric)
+    protected function getData(MetricType $metric, $suffix = '')
     {
-        $name = $metric->getOptions()->getFullyQualifiedName();
+        $name = $metric->getOptions()->getFullyQualifiedName() . $suffix;
 
         return isset($this->data[$name]) ? $this->data[$name] : array();
     }

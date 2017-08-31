@@ -138,7 +138,16 @@ class Redis extends ArrayStorage implements StorageAdapter
     {
         $this->openConnection();
         try {
-            $this->redis->hIncrByFloat($this->getMetricKey($metric), $this->getLabelsKey($metric, $value), 1);
+            $script =<<<EOF
+redis.call('hIncrByFloat', ARGV[1], ARGV[2], 1)
+redis.call('hIncrByFloat', ARGV[1] .. '_sum', ARGV[3], ARGV[4])
+EOF;
+            $this->redis->eval($script, array(
+                $this->getMetricKey($metric),
+                $this->getLabelsKey($metric, $value),
+                $this->getLabelsKey($metric),
+                $value,
+            ));
         } catch (\Exception $e) {
             throw new StorageException('Failed to subtract metric value', 0, $e);
         }
@@ -162,22 +171,23 @@ class Redis extends ArrayStorage implements StorageAdapter
      * Gets the redis key for the metric.
      *
      * @param MetricType $metric
+     * @param string     $suffix
      *
      * @return string
      */
-    private function getMetricKey(MetricType $metric)
+    private function getMetricKey(MetricType $metric, $suffix = '')
     {
-        return sprintf('%s%s', $this->prefix, $metric->getOptions()->getFullyQualifiedName());
+        return sprintf('%s%s%s', $this->prefix, $metric->getOptions()->getFullyQualifiedName(), $suffix);
     }
 
     /**
      * {@inheritdoc}
      */
-    protected function getData(MetricType $metric)
+    protected function getData(MetricType $metric, $suffix = '')
     {
         $this->openConnection();
         try {
-            return $this->redis->hGetAll($this->getMetricKey($metric));
+            return $this->redis->hGetAll($this->getMetricKey($metric, $suffix));
         } catch (\Exception $e) {
             throw new StorageException('Failed to collect metric samples', 0, $e);
         }

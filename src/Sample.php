@@ -6,6 +6,8 @@
 
 namespace Bexio\PrometheusPHP;
 
+use Bexio\PrometheusPHP\Metric\HistogramOptions;
+
 class Sample
 {
     /**
@@ -24,6 +26,18 @@ class Sample
     private $value;
 
     /**
+     * @param string   $name
+     * @param string[] $labels
+     * @param float    $value
+     *
+     * @return Sample
+     */
+    public static function createFromValues($name, array $labels, $value)
+    {
+        return new Sample($name, $labels, $value);
+    }
+
+    /**
      * @param Options $options
      * @param float   $value
      *
@@ -31,7 +45,11 @@ class Sample
      */
     public static function createFromOptions(Options $options, $value)
     {
-        return new Sample($options->getFullyQualifiedName(), $options->getLabels(), $value);
+        $name = $options->getFullyQualifiedName();
+        if ($options instanceof HistogramOptions && array_key_exists('le', $options->getLabels())) {
+            $name .= '_bucket';
+        }
+        return new Sample($name, $options->getLabels(), $value);
     }
 
     /**
