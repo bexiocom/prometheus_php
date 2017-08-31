@@ -144,4 +144,12 @@ class InMemory extends ArrayStorage implements StorageAdapter
 
         return isset($this->data[$name]) ? $this->data[$name] : array();
     }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function getKeys(MetricType $metric)
+    {
+        return array_keys($this->getData($metric));
+    }
 }

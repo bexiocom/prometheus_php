@@ -7,7 +7,8 @@
 namespace Bexio\PrometheusPHP\Tests\Storage\Redis;
 
 use Bexio\PrometheusPHP\Metric\Histogram;
-use Bexio\PrometheusPHP\Storage\InMemory;
+use Bexio\PrometheusPHP\Metric\HistogramCollection;
+use Bexio\PrometheusPHP\Sample;
 use Bexio\PrometheusPHP\Storage\Redis;
 
 class HistogramTest extends \PHPUnit_Framework_TestCase
@@ -32,6 +33,7 @@ class HistogramTest extends \PHPUnit_Framework_TestCase
         $this->redis->hSet('phpunit:foo_bar_baz', '{"foo":"bar","le":1}', 11);
         $this->redis->hSet('phpunit:foo_bar_baz', '{"foo":"bar","le":10}', 7);
         $this->redis->hSet('phpunit:foo_bar_baz', '{"foo":"bar","le":"+Inf"}', 5);
+        $this->redis->hSet('phpunit:foo_bar_baz', '{"foo":"baz","le":10}', 17);
         $this->subject = new Redis($this->redis, 'phpunit:');
     }
 
@@ -99,6 +101,32 @@ class HistogramTest extends \PHPUnit_Framework_TestCase
         for ($i = 0; $i < count($expected); $i++) {
             $this->assertEquals($expected[$i], $samples[$i]->getValue());
         }
+    }
+
+    /**
+     * Test retrieval of collection samples.
+     */
+    public function testCollectionSamples()
+    {
+        $collection = HistogramCollection::createFromValues('baz', 'Just a counter collection for testing', array(
+            'foo',
+        ), array(1, 10), 'foo', 'bar');
+
+        $samples = $this->subject->collectSamples($collection);
+
+        $options = $collection->getOptions();
+
+        $this->assertEquals(array(
+            Sample::createFromOptions($options->withLabels(array('le' => 1)), 7),
+            Sample::createFromOptions($options->withLabels(array('le' => 10)), 12),
+            Sample::createFromOptions($options->withLabels(array('le' => '+Inf')), 15),
+            Sample::createFromOptions($options->withLabels(array('foo' => 'bar', 'le' => 1)), 11),
+            Sample::createFromOptions($options->withLabels(array('foo' => 'bar', 'le' => 10)), 18),
+            Sample::createFromOptions($options->withLabels(array('foo' => 'bar', 'le' => '+Inf')), 23),
+            Sample::createFromOptions($options->withLabels(array('foo' => 'baz', 'le' => 1)), 0),
+            Sample::createFromOptions($options->withLabels(array('foo' => 'baz', 'le' => 10)), 17),
+            Sample::createFromOptions($options->withLabels(array('foo' => 'baz', 'le' => '+Inf')), 17),
+        ), $samples);
     }
 
     /**

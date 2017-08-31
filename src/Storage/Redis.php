@@ -182,4 +182,17 @@ class Redis extends ArrayStorage implements StorageAdapter
             throw new StorageException('Failed to collect metric samples', 0, $e);
         }
     }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function getKeys(MetricType $metric)
+    {
+        $this->openConnection();
+        try {
+            return $this->redis->hKeys($this->getMetricKey($metric));
+        } catch (\Exception $e) {
+            throw new StorageException('Failed to collect metric samples', 0, $e);
+        }
+    }
 }

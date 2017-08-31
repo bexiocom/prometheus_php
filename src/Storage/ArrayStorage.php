@@ -62,12 +62,22 @@ abstract class ArrayStorage implements StorageAdapter
     private function collectCollectionSamples(MetricTypeCollection $metric)
     {
         $result = array();
+        $metrics = array();
 
-        foreach ($this->getData($metric) as $key => $value) {
-            $options = InMemory::DEFAULT_VALUE_INDEX == $key ?
-                $metric->getOptions()
-                : $metric->withLabels(json_decode($key, true))->getOptions();
-            $result[] = Sample::createFromOptions($options, $value);
+        foreach ($this->getKeys($metric) as $key) {
+            $labels = array();
+            if (InMemory::DEFAULT_VALUE_INDEX != $key) {
+                $decoded = json_decode($key, true);
+                unset($decoded['le']);
+                $labels = $decoded;
+            }
+
+            $metrics[json_encode($labels)] = $labels;
+        }
+
+        foreach ($metrics as $labels) {
+            $collectMetric = empty($labels) ? $metric : $metric->withLabels($labels);
+            $result = array_merge($result, $this->collectSingleSamples($collectMetric));
         }
 
         return $result;
@@ -82,18 +92,24 @@ abstract class ArrayStorage implements StorageAdapter
     {
         $options = $metric->getOptions();
         $buckets = $options instanceof HistogramOptions
-            ? array_merge($options->getBuckets(), array(PHP_INT_MAX))
+            ? array_merge($options->getBuckets(), array('+Inf'))
             : array(null);
         $samples = array();
         $sum = null;
         $data = $this->getData($metric);
         foreach ($buckets as $le) {
-            $labelsKey = $this->getLabelsKey($metric, $le);
+            $labelsKey = $this->getLabelsKey($metric, '+Inf' == $le ? PHP_INT_MAX : $le);
             $value = isset($data[$labelsKey]) ? $data[$labelsKey] : null;
 
             $sum += $value;
 
-            $samples[] = Sample::createFromOptions($options, $options instanceof HistogramOptions ? $sum : $value);
+            $collectOptions = $options;
+            if ($options instanceof HistogramOptions) {
+                $value = $sum;
+                $collectOptions = $options->withLabels(array('le' => $le));
+            }
+
+            $samples[] = Sample::createFromOptions($collectOptions, $value);
         }
 
         return $samples;
@@ -107,4 +123,13 @@ abstract class ArrayStorage implements StorageAdapter
      * @return float[]
      */
     abstract protected function getData(MetricType $metric);
+
+    /**
+     * Gets the value keys for a metric.
+     *
+     * @param MetricType $metric
+     *
+     * @return string[]
+     */
+    abstract protected function getKeys(MetricType $metric);
 }

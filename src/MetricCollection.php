@@ -18,7 +18,7 @@ use Bexio\PrometheusPHP\Metric\CounterOptions;
 abstract class MetricCollection implements MetricTypeCollection
 {
     /**
-     * @var CounterOptions
+     * @var Options
      */
     protected $options;
     /**
@@ -33,10 +33,10 @@ abstract class MetricCollection implements MetricTypeCollection
     /**
      * Constructor.
      *
-     * @param CounterOptions $options
+     * @param Options $options
      * @param \string[]      $labels
      */
-    protected function __construct(CounterOptions $options, array $labels)
+    protected function __construct(Options $options, array $labels)
     {
         $this->options = $options;
         $this->labels = $labels;
