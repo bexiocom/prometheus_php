@@ -10,6 +10,7 @@ use Bexio\PrometheusPHP\Exception\StorageException;
 use Bexio\PrometheusPHP\Type\Addable;
 use Bexio\PrometheusPHP\Type\Decrementable;
 use Bexio\PrometheusPHP\Type\Incrementable;
+use Bexio\PrometheusPHP\Type\Observable;
 use Bexio\PrometheusPHP\Type\Settable;
 use Bexio\PrometheusPHP\Type\Subtractable;
 
@@ -65,6 +66,14 @@ interface StorageAdapter
      * @throws StorageException
      */
     public function sub(Subtractable $metric, $value);
+
+    /**
+     * @param Observable $metric
+     * @param float      $value
+     *
+     * @throws StorageException
+     */
+    public function observe(Observable $metric, $value);
 
     /**
      * Collects samples of a metric.
