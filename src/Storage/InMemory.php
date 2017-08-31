@@ -6,13 +6,12 @@
 
 namespace Bexio\PrometheusPHP\Storage;
 
-use Bexio\PrometheusPHP\MetricTypeCollection;
-use Bexio\PrometheusPHP\Sample;
 use Bexio\PrometheusPHP\Type\Addable;
 use Bexio\PrometheusPHP\Type\Decrementable;
 use Bexio\PrometheusPHP\Type\Incrementable;
 use Bexio\PrometheusPHP\MetricType;
 use Bexio\PrometheusPHP\Options;
+use Bexio\PrometheusPHP\Type\Observable;
 use Bexio\PrometheusPHP\Type\Settable;
 use Bexio\PrometheusPHP\StorageAdapter;
 use Bexio\PrometheusPHP\Type\Subtractable;
@@ -22,10 +21,8 @@ use Bexio\PrometheusPHP\Type\Subtractable;
  *
  * Use this storage adapter for testing purposes or when submitting metrics to a push gateway.
  */
-class InMemory implements StorageAdapter
+class InMemory extends ArrayStorage implements StorageAdapter
 {
-    const DEFAULT_VALUE_INDEX = 'default';
-
     /**
      * @var array
      */
@@ -94,6 +91,9 @@ class InMemory implements StorageAdapter
         });
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function set(Settable $metric, $value)
     {
         $this->withIndex($metric, function ($name, $labels) use ($value) {
@@ -101,10 +101,29 @@ class InMemory implements StorageAdapter
         });
     }
 
-    public function withIndex(MetricType $metric, callable $function)
+    /**
+     * {@inheritdoc}
+     */
+    public function observe(Observable $metric, $value)
     {
-        $name = $metric->getOptions()->getFullyQualifiedName();
-        $labels = $this->getLabelsKey($metric->getOptions());
+        $this->withIndex($metric, function ($name, $labels) {
+            $this->data[$name][$labels]++;
+        }, $value);
+        $this->withIndex($metric, function ($name, $labels) use ($value) {
+            $this->data[$name][$labels] += $value;
+        }, null, '_sum');
+    }
+
+    /**
+     * @param MetricType $metric
+     * @param callable   $function
+     * @param float|null $value
+     * @param string     $suffix
+     */
+    protected function withIndex(MetricType $metric, callable $function, $value = null, $suffix = '')
+    {
+        $name = $metric->getOptions()->getFullyQualifiedName() . $suffix;
+        $labels = $this->getLabelsKey($metric, $value);
         $this->ensureIndex($name, $labels);
         $function($name, $labels);
     }
@@ -121,65 +140,20 @@ class InMemory implements StorageAdapter
     }
 
     /**
-     * Gets a unique identifier for the given options.
-     *
-     * @param Options $options
-     *
-     * @return string
+     * {@inheritdoc}
      */
-    private function getLabelsKey(Options $options)
+    protected function getData(MetricType $metric, $suffix = '')
     {
-        $labels = $options->getLabels();
-        ksort($labels);
+        $name = $metric->getOptions()->getFullyQualifiedName() . $suffix;
 
-        return empty($labels) ? 'default' : json_encode($labels);
+        return isset($this->data[$name]) ? $this->data[$name] : array();
     }
 
     /**
      * {@inheritdoc}
      */
-    public function collectSamples(MetricType $metric)
+    protected function getKeys(MetricType $metric)
     {
-        return $metric instanceof MetricTypeCollection ?
-            $this->collectCollectionSamples($metric)
-            : $this->collectSingleSamples($metric);
-    }
-
-    /**
-     * @param MetricTypeCollection $metric
-     *
-     * @return Sample[]
-     */
-    private function collectCollectionSamples(MetricTypeCollection $metric)
-    {
-        $result = array();
-
-        $name = $metric->getOptions()->getFullyQualifiedName();
-        if (isset($this->data[$name])) {
-            foreach ($this->data[$name] as $key => $value) {
-                $options = 'default' == $key ?
-                    $metric->getOptions()
-                    : $metric->withLabels(json_decode($key, true))->getOptions();
-                $result[] = Sample::createFromOptions($options, $value);
-            }
-        }
-
-        return $result;
-    }
-
-    /**
-     * @param MetricType $metric
-     *
-     * @return Sample[]
-     */
-    private function collectSingleSamples(MetricType $metric)
-    {
-        $name = $metric->getOptions()->getFullyQualifiedName();
-        $labels = $this->getLabelsKey($metric->getOptions());
-        $value = isset($this->data[$name][$labels])
-            ? $this->data[$name][$labels]
-            : null;
-
-        return array(Sample::createFromOptions($metric->getOptions(), $value));
+        return array_keys($this->getData($metric));
     }
 }

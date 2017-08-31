@@ -8,17 +8,15 @@ namespace Bexio\PrometheusPHP\Storage;
 
 use Bexio\PrometheusPHP\Exception\StorageException;
 use Bexio\PrometheusPHP\MetricType;
-use Bexio\PrometheusPHP\MetricTypeCollection;
-use Bexio\PrometheusPHP\Options;
-use Bexio\PrometheusPHP\Sample;
 use Bexio\PrometheusPHP\StorageAdapter;
 use Bexio\PrometheusPHP\Type\Addable;
 use Bexio\PrometheusPHP\Type\Decrementable;
 use Bexio\PrometheusPHP\Type\Incrementable;
+use Bexio\PrometheusPHP\Type\Observable;
 use Bexio\PrometheusPHP\Type\Settable;
 use Bexio\PrometheusPHP\Type\Subtractable;
 
-class Redis implements StorageAdapter
+class Redis extends ArrayStorage implements StorageAdapter
 {
     const DEFAULT_VALUE_INDEX = 'default';
 
@@ -75,7 +73,7 @@ class Redis implements StorageAdapter
     {
         $this->openConnection();
         try {
-            $this->redis->hIncrByFloat($this->getMetrickey($metric), $this->getLabelsKey($metric), 1);
+            $this->redis->hIncrByFloat($this->getMetricKey($metric), $this->getLabelsKey($metric), 1);
         } catch (\Exception $e) {
             throw new StorageException('Failed to increment metric value', 0, $e);
         }
@@ -88,7 +86,7 @@ class Redis implements StorageAdapter
     {
         $this->openConnection();
         try {
-            $this->redis->hIncrByFloat($this->getMetrickey($metric), $this->getLabelsKey($metric), -1);
+            $this->redis->hIncrByFloat($this->getMetricKey($metric), $this->getLabelsKey($metric), -1);
         } catch (\Exception $e) {
             throw new StorageException('Failed to decrement metric value', 0, $e);
         }
@@ -101,7 +99,7 @@ class Redis implements StorageAdapter
     {
         $this->openConnection();
         try {
-            $this->redis->hSet($this->getMetrickey($metric), $this->getLabelsKey($metric), $value);
+            $this->redis->hSet($this->getMetricKey($metric), $this->getLabelsKey($metric), $value);
         } catch (\Exception $e) {
             throw new StorageException('Failed to set metric value', 0, $e);
         }
@@ -114,7 +112,7 @@ class Redis implements StorageAdapter
     {
         $this->openConnection();
         try {
-            $this->redis->hIncrByFloat($this->getMetrickey($metric), $this->getLabelsKey($metric), $value);
+            $this->redis->hIncrByFloat($this->getMetricKey($metric), $this->getLabelsKey($metric), $value);
         } catch (\Exception $e) {
             throw new StorageException('Failed to add metric value', 0, $e);
         }
@@ -127,7 +125,7 @@ class Redis implements StorageAdapter
     {
         $this->openConnection();
         try {
-            $this->redis->hIncrByFloat($this->getMetrickey($metric), $this->getLabelsKey($metric), $value * -1);
+            $this->redis->hIncrByFloat($this->getMetricKey($metric), $this->getLabelsKey($metric), $value * -1);
         } catch (\Exception $e) {
             throw new StorageException('Failed to subtract metric value', 0, $e);
         }
@@ -136,56 +134,24 @@ class Redis implements StorageAdapter
     /**
      * {@inheritdoc}
      */
-    public function collectSamples(MetricType $metric)
+    public function observe(Observable $metric, $value)
     {
         $this->openConnection();
         try {
-            $result = $this->redis->hGetAll($this->getMetrickey($metric));
-
-            return $metric instanceof MetricTypeCollection ?
-                $this->collectCollectionSamples($metric, $result)
-                : $this->collectSingleSamples($metric, $result);
+            $script =<<<EOF
+redis.call('hIncrByFloat', ARGV[1], ARGV[2], 1)
+redis.call('hIncrByFloat', ARGV[1] .. '_sum', ARGV[3], ARGV[4])
+EOF;
+            $this->redis->eval($script, array(
+                $this->getMetricKey($metric),
+                $this->getLabelsKey($metric, $value),
+                $this->getLabelsKey($metric),
+                $value,
+            ));
         } catch (\Exception $e) {
-            throw new StorageException('Failed to collect metric samples', 0, $e);
+            throw new StorageException('Failed to update Histogram', 0, $e);
         }
     }
-
-    /**
-     * @param MetricTypeCollection $metric
-     * @param float[]              $data
-     *
-     * @return Sample[]
-     */
-    private function collectCollectionSamples(MetricTypeCollection $metric, array $data)
-    {
-        $result = array();
-
-        foreach ($data as $key => $value) {
-            $options = Redis::DEFAULT_VALUE_INDEX == $key ?
-                $metric->getOptions()
-                : $metric->withLabels(json_decode($key, true))->getOptions();
-            $result[] = Sample::createFromOptions($options, $value);
-        }
-
-        return $result;
-    }
-
-    /**
-     * @param MetricType $metric
-     * @param float[]    $data
-     *
-     * @return Sample[]
-     */
-    private function collectSingleSamples(MetricType $metric, array $data)
-    {
-        $labels = $this->getLabelsKey($metric);
-        $value = isset($data[$labels])
-            ? $data[$labels]
-            : null;
-
-        return array(Sample::createFromOptions($metric->getOptions(), $value));
-    }
-
 
     /**
      * Opens the Redis connection.
@@ -205,26 +171,38 @@ class Redis implements StorageAdapter
      * Gets the redis key for the metric.
      *
      * @param MetricType $metric
+     * @param string     $suffix
      *
      * @return string
      */
-    private function getMetrickey(MetricType $metric)
+    private function getMetricKey(MetricType $metric, $suffix = '')
     {
-        return sprintf('%s%s', $this->prefix, $metric->getOptions()->getFullyQualifiedName());
+        return sprintf('%s%s%s', $this->prefix, $metric->getOptions()->getFullyQualifiedName(), $suffix);
     }
 
     /**
-     * Gets a unique identifier for the given options.
-     *
-     * @param MetricType $metric
-     *
-     * @return string
+     * {@inheritdoc}
      */
-    private function getLabelsKey(MetricType $metric)
+    protected function getData(MetricType $metric, $suffix = '')
     {
-        $labels = $metric->getOptions()->getLabels();
-        ksort($labels);
+        $this->openConnection();
+        try {
+            return $this->redis->hGetAll($this->getMetricKey($metric, $suffix));
+        } catch (\Exception $e) {
+            throw new StorageException('Failed to collect metric samples', 0, $e);
+        }
+    }
 
-        return empty($labels) ? Redis::DEFAULT_VALUE_INDEX : json_encode($labels);
+    /**
+     * {@inheritdoc}
+     */
+    protected function getKeys(MetricType $metric)
+    {
+        $this->openConnection();
+        try {
+            return $this->redis->hKeys($this->getMetricKey($metric));
+        } catch (\Exception $e) {
+            throw new StorageException('Failed to collect metric samples', 0, $e);
+        }
     }
 }

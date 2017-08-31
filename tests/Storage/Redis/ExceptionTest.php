@@ -8,6 +8,9 @@ namespace Bexio\PrometheusPHP\Tests\Storage\Redis;
 
 use Bexio\PrometheusPHP\Exception\StorageException;
 use Bexio\PrometheusPHP\Metric\Gauge;
+use Bexio\PrometheusPHP\Metric\GaugeCollection;
+use Bexio\PrometheusPHP\Metric\Histogram;
+use Bexio\PrometheusPHP\Storage\ArrayStorage;
 use Bexio\PrometheusPHP\Storage\Redis;
 
 class ExceptionTest extends \PHPUnit_Framework_TestCase
@@ -33,6 +36,7 @@ class ExceptionTest extends \PHPUnit_Framework_TestCase
             'add' => array('add', 'hIncrByFloat', 'Failed to add metric value'),
             'subtract' => array('sub', 'hIncrByFloat', 'Failed to subtract metric value'),
             'set' => array('set', 'hSet', 'Failed to set metric value'),
+            'observe' => array('observe', 'eval', 'Failed to update Histogram'),
             'collect' => array('collectSamples', 'hGetAll', 'Failed to collect metric samples'),
         );
     }
@@ -47,12 +51,45 @@ class ExceptionTest extends \PHPUnit_Framework_TestCase
     public function testExceptionsForOperations($call, $method, $message)
     {
         $subject = new Redis($this->redis);
-        $this->redis->expects($this->once())
+        $this->redis->expects($this->any())
             ->method($method)
             ->willThrowException(new \Exception());
-        $metric = Gauge::createFromValues('foo', 'bar');
+        $metric = 'observe' != $call
+            ? Gauge::createFromValues('foo', 'bar')
+            : Histogram::createFromValues('foo', 'bar');
         $this->setExpectedException(StorageException::class, $message);
         $subject->$call($metric, 3);
+    }
+
+    /**
+     * Tests exception when failed to collect keys on collections.
+     */
+    public function testExceptionForKeyRetrieval()
+    {
+        $subject = new Redis($this->redis);
+        $this->redis->expects($this->once())
+            ->method('hKeys')
+            ->willThrowException(new \Exception());
+        $metric = GaugeCollection::createFromValues('foo', 'bar', array('baz'));
+        $this->setExpectedException(StorageException::class, 'Failed to collect metric');
+        $subject->collectSamples($metric);
+    }
+
+    /**
+     * Tests exception when failed to collect data on collections.
+     */
+    public function testExceptionForDataRetrieval()
+    {
+        $subject = new Redis($this->redis);
+        $this->redis->expects($this->once())
+            ->method('hKeys')
+            ->willReturn(array(ArrayStorage::DEFAULT_VALUE_INDEX));
+        $this->redis->expects($this->once())
+            ->method('hGetAll')
+            ->willThrowException(new \Exception());
+        $metric = GaugeCollection::createFromValues('foo', 'bar', array('baz'));
+        $this->setExpectedException(StorageException::class, 'Failed to collect metric');
+        $subject->collectSamples($metric);
     }
 
     public function getOpenConnectionData()

@@ -18,13 +18,13 @@ by the [golang client](https://github.com/prometheus/client_golang).
   
 ## Features
 
-- Counter and Gauge metric types.
+- Counter, Gauge and Histogram metric types.
 - Redis and in memory storage.
 - Rendering to text format.
 
 ## Missing features
 
-- Histogram and Summary metric types.
+- Summary metric types.
 - Ability to submit metric samples to a PushGateway.
 - Storage utilising filesystem, Memcached and APC.
 - Rendering to Protocol buffer format
