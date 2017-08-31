@@ -74,8 +74,8 @@ EOF
                 <<<EOF
 # HELP foo Pharetra Dapibus
 # TYPE foo gauge
-foo{"foo"="bar"} 3
-foo{"foo"="baz"} 5
+foo{foo="bar"} 3
+foo{foo="baz"} 5
 
 EOF
             ),
@@ -92,8 +92,8 @@ EOF
 # HELP foo Pharetra Dapibus
 # TYPE foo gauge
 foo 7
-foo{"foo"="bar"} 3
-foo{"foo"="baz"} 5
+foo{foo="bar"} 3
+foo{foo="baz"} 5
 
 EOF
             ),

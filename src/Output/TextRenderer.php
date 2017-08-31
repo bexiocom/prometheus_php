@@ -52,7 +52,7 @@ EOF;
     {
         $labels = array();
         foreach ($sample->getLabels() as $labelName => $labelValue) {
-            $labels[] = sprintf('"%s"="%s"', $labelName, $labelValue);
+            $labels[] = sprintf('%s="%s"', $labelName, $labelValue);
         }
 
         return empty($labels) ? '' : sprintf('{%s}', implode(',', $labels));
